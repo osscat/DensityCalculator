@@ -17,13 +17,12 @@ def detect_img(yolo):
             r_image.show()
     yolo.close_session()
 
-def analyse_upl_img(filename):
-    yolo = YOLO()
+def analyse_upl_img(yolo, filename):
     image = Image.open(f"./image_in/{filename}")
     r_image, human_pos_list = yolo.detect_human(image)
     print(human_pos_list)
     r_image.save(f"./image_out/{filename}")
-    yolo.close_session()
+    return human_pos_list
 
 
 def distance_2_ppl(first_person, second_person, pic_length_in_pixel, cmos_length, 
