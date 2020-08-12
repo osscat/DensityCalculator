@@ -111,7 +111,7 @@ def detect_mitsu():
 
         distance = distance_2_ppl_person(first_person, second_person, \
             pic_length_in_pixel, cmos_length, focus_length, camera_mov_delta)
-        return '2人の距離は' + str(distance)
+        return '2人の距離は {:.2f} cm'.format(distance)
 
     return render_template("detect_mitsu.html")
 
