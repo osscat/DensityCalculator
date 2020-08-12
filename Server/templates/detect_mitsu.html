@@ -6,10 +6,14 @@
   <title>Document</title>
 </head>
 <body>
+  <h3>密判定サイト</h3>
+  <p>位置をずらして撮影した2枚の写真から、密かどうかを判定します。</p>
   <form method="post" action="/detect_mitsu" enctype="multipart/form-data">
-      <input type="file" name="pic1" id="pic1">
-      <input type="file" name="pic2" id="pic2">
-      <input type="submit" value="Upload">
+      <div>1枚目の写真：<input type="file" name="pic1" id="pic1"></div>
+      <div>2枚目の写真：<input type="file" name="pic2" id="pic2"></div>
+      <div>カメラの移動距離[cm]：<input type="number" name="move" id="move" value="70"></div>
+      <div>撮像素子サイズ[mm]：<input type="number" name="cmos" id="cmos" value="4.8">※iPhone8だと4.8mmです</div>
+      <div><br/><input type="submit" value="判定する"></div>
   </form>
 </body>
 </html>

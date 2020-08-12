@@ -55,9 +55,24 @@ def valid_file(name):
     else:
         return False
 
+def get_float(name):
+    if name not in request.form:
+        return 0
+    return float(request.form[name])
+
 @app.route('/detect_mitsu', methods=['GET', 'POST'])
 def detect_mitsu():
     if request.method == 'POST':
+        camera_mov_delta = get_float('move')
+        if camera_mov_delta == 0:
+            flash('カメラの移動距離を入力してください')
+            return redirect(request.url)
+
+        cmos_length = get_float('cmos')
+        if cmos_length == 0:
+            flash('撮像素子サイズを入力してください')
+            return redirect(request.url)
+
         if not valid_file('pic1') or not valid_file('pic2'):
             flash('写真を2つアップロードしてください')
             return redirect(request.url)
@@ -71,13 +86,13 @@ def detect_mitsu():
         if len(pos1) <= 1 or len(pos2) <= 1:
             flash('2人以上写っている写真をアップロードしてください')
             return redirect(request.url)
+        app.logger.debug(pos1)
+        app.logger.debug(pos2)
 
         first_person = Person(pos1[0][0], pos2[0][0])
         second_person = Person(pos1[1][0], pos2[1][0])
         pic_length_in_pixel = 640
-        cmos_length = 4.8
         focus_length = 4
-        camera_mov_delta = 70
 
         distance = distance_2_ppl_person(first_person, second_person, \
             pic_length_in_pixel, cmos_length, focus_length, camera_mov_delta)
