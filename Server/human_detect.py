@@ -1,4 +1,4 @@
-from yolo import YOLO, detect_video
+from yolo_tiny import YOLO, detect_video
 from PIL import Image
 import numpy as np
 

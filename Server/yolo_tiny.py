@@ -166,6 +166,82 @@ class YOLO(object):
         print(end - start)
         return image
 
+    def detect_human(self, image):
+        """
+        人間をアノテーションした画像と、検知した人間の座標リストを返します。
+        座標は左上を原点とする(x, y)のタプルで、xの昇順でソートされます。
+        """
+        start = timer()
+
+        if self.model_image_size != (None, None):
+            assert self.model_image_size[0]%32 == 0, 'Multiples of 32 required'
+            assert self.model_image_size[1]%32 == 0, 'Multiples of 32 required'
+            boxed_image = letterbox_image(image, tuple(reversed(self.model_image_size)))
+        else:
+            new_image_size = (image.width - (image.width % 32),
+                              image.height - (image.height % 32))
+            boxed_image = letterbox_image(image, new_image_size)
+        image_data = np.array(boxed_image, dtype='float32')
+
+        image_data /= 255.
+        image_data = np.expand_dims(image_data, 0)  # Add batch dimension.
+
+        out_boxes, out_scores, out_classes = self.sess.run(
+            [self.boxes, self.scores, self.classes],
+            feed_dict={
+                self.yolo_model.input: image_data,
+                self.input_image_shape: [image.size[1], image.size[0]],
+                K.learning_phase(): 0
+            })
+
+        font = ImageFont.truetype(font='font/FiraMono-Medium.otf',
+                    size=np.floor(3e-2 * image.size[1] + 0.5).astype('int32'))
+        thickness = (image.size[0] + image.size[1]) // 300
+
+        print('image size: ', (image.size[0], image.size[1]))
+
+        human_num = len(list(filter(lambda c: c=='person', [self.class_names[clazz] for clazz in out_classes])))
+        print(f"{human_num} human detected.")
+
+        human_pos_list = []
+        for i, c in reversed(list(enumerate(out_classes))):
+            predicted_class = self.class_names[c]
+            if predicted_class != 'person':
+                continue
+            box = out_boxes[i]
+            score = out_scores[i]
+
+            label = '{}{} {:.2f}'.format(predicted_class, i, score)
+            draw = ImageDraw.Draw(image)
+            label_size = draw.textsize(label, font)
+
+            top, left, bottom, right = box
+            top = max(0, np.floor(top + 0.5).astype('int32'))
+            left = max(0, np.floor(left + 0.5).astype('int32'))
+            bottom = min(image.size[1], np.floor(bottom + 0.5).astype('int32'))
+            right = min(image.size[0], np.floor(right + 0.5).astype('int32'))
+            human_pos_list.append(((left+right)/2, (top+bottom)/2))
+
+            if top - label_size[1] >= 0:
+                text_origin = np.array([left, top - label_size[1]])
+            else:
+                text_origin = np.array([left, top + 1])
+
+            # My kingdom for a good redistributable image drawing library.
+            for i in range(thickness):
+                draw.rectangle(
+                    [left + i, top + i, right - i, bottom - i],
+                    outline=self.colors[c])
+            draw.rectangle(
+                [tuple(text_origin), tuple(text_origin + label_size)],
+                fill=self.colors[c])
+            draw.text(text_origin, label, fill=(0, 0, 0), font=font)
+            del draw
+
+        end = timer()
+        print('proccessing time: ',end - start)
+        return image, sorted(human_pos_list, key=lambda x: x[0])
+
     def close_session(self):
         self.sess.close()
 
