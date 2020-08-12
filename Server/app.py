@@ -2,6 +2,9 @@ import os, human_detect
 from flask import Flask, flash, request, redirect, \
     url_for, render_template
 from yolo_tiny import YOLO
+from PIL import Image
+from PIL.ExifTags import TAGS
+from PIL.MpoImagePlugin import MpoImageFile
 from distance_2_ppl import distance_2_ppl_person
 from person import Person
 
@@ -60,6 +63,18 @@ def get_float(name):
         return 0
     return float(request.form[name])
 
+def get_width_and_focus_length(filename):
+    image: MpoImageFile = Image.open(f"./image_in/{filename}")
+    width = image.size[0]
+
+    exif = image.getexif()
+    # tag_idはExif情報のキー、valueはExif情報の値。
+    # tag_idはstr型ではないので、TAGS.getメソッドによってstr型に変換する
+    for tag_id, value in exif.items():
+        tag = TAGS.get(tag_id, tag_id)
+        if tag == 'FocalLength':
+            return width, value
+
 @app.route('/detect_mitsu', methods=['GET', 'POST'])
 def detect_mitsu():
     if request.method == 'POST':
@@ -81,18 +96,18 @@ def detect_mitsu():
         file2 = request.files['pic2']
         save_file(file1)
         save_file(file2)
+
         pos1 = human_detect.analyse_upl_img(yolo, file1.filename)
         pos2 = human_detect.analyse_upl_img(yolo, file2.filename)
+        app.logger.debug(pos1)
+        app.logger.debug(pos2)
         if len(pos1) <= 1 or len(pos2) <= 1:
             flash('2人以上写っている写真をアップロードしてください')
             return redirect(request.url)
-        app.logger.debug(pos1)
-        app.logger.debug(pos2)
 
         first_person = Person(pos1[0][0], pos2[0][0])
         second_person = Person(pos1[1][0], pos2[1][0])
-        pic_length_in_pixel = 640
-        focus_length = 4
+        pic_length_in_pixel, focus_length = get_width_and_focus_length(file1.filename)
 
         distance = distance_2_ppl_person(first_person, second_person, \
             pic_length_in_pixel, cmos_length, focus_length, camera_mov_delta)
