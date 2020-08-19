@@ -24,27 +24,6 @@ def allowed_file(filename):
 def index():
     return redirect('/detect_mitsu')
 
-@app.route('/post-picture', methods=['GET', 'POST'])
-def post_picture():
-
-    if request.method == 'POST':
-        # check if the post request has the file part
-        if 'pic1' not in request.files:
-            flash('No file part')
-            return redirect(request.url)
-        file = request.files['pic1']
-        # if user does not select file, browser also
-        # submit an empty part without filename
-        if file.filename == '':
-            flash('No selected file')
-            return redirect(request.url)
-        if file and allowed_file(file.filename):
-            save_file(file)
-            human_detect.analyse_upl_img(yolo, file.filename)    
-            return '成功\n'
-
-    return render_template("client.html")
-
 def save_file(file):
     file.save(os.path.join(app.config['UPLOAD_FOLDER'], file.filename))
 
