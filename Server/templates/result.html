@@ -1,16 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>判定結果</title>
 </head>
-<body>
+
+<body style="font-size: 50px; ">
   {% if mitsu %}
-    <p style="color: red; font-size: 80px; font-weight: bold;">密です。</p>
+  <p style="color: red; font-size: 80px; font-weight: bold;">密です。</p>
+  <p>密と判定された距離は {{ distance }} cmです。</p>
   {% else %}
-    <p>密ではありません。</p>
+  <p>密ではありません。</p>
+  <p>最短距離は {{ distance }} cmです。</p>
   {% endif %}
   <a href="/detect_mitsu">入力画面に戻る</a>
 </body>
+
 </html>
