@@ -64,6 +64,11 @@ def get_float(name):
         return 0
     return float(request.form[name])
 
+def get_pos_list(name):
+    file = request.files[name]
+    save_file(file)
+    return human_detect.analyse_upl_img(yolo, file.filename)
+
 def get_width_and_focus_length(filename):
     image: MpoImageFile = Image.open(f"./image_in/{filename}")
     width = image.size[0]
@@ -75,6 +80,29 @@ def get_width_and_focus_length(filename):
         tag = TAGS.get(tag_id, tag_id)
         if tag == 'FocalLength':
             return width, value
+
+    return width, None
+
+def crowded_people(pos_list1, pos_list2, pic_length_in_pixel, cmos_length, focus_length, camera_mov_delta):
+    app.logger.debug(pos_list1)
+    app.logger.debug(pos_list2)
+
+    count = len(pos_list1)
+    for i in range(count):
+        first_person = Person(pos_list1[i][0], pos_list2[i][0])
+        for j in range(i + 1, count):
+            second_person = Person(pos_list1[j][0], pos_list2[j][0])
+            distance = distance_2_ppl_person(first_person, second_person, \
+                pic_length_in_pixel, cmos_length, focus_length, camera_mov_delta)
+
+            app.logger.debug(first_person)
+            app.logger.debug(second_person)
+            app.logger.debug(distance)
+
+            if distance < 200:
+                return True
+
+    return False
 
 @app.route('/detect_mitsu', methods=['GET', 'POST'])
 def detect_mitsu():
@@ -93,26 +121,19 @@ def detect_mitsu():
             flash('写真を2つアップロードしてください')
             return redirect(request.url)
 
-        file1 = request.files['pic1']
-        file2 = request.files['pic2']
-        save_file(file1)
-        save_file(file2)
-
-        pos1 = human_detect.analyse_upl_img(yolo, file1.filename)
-        pos2 = human_detect.analyse_upl_img(yolo, file2.filename)
-        app.logger.debug(pos1)
-        app.logger.debug(pos2)
-        if len(pos1) <= 1 or len(pos2) <= 1:
+        pos_list1 = get_pos_list('pic1')
+        pos_list2 = get_pos_list('pic2')
+        if len(pos_list1) <= 1 or len(pos_list2) <= 1:
             flash('2人以上写っている写真をアップロードしてください')
             return redirect(request.url)
 
-        first_person = Person(pos1[0][0], pos2[0][0])
-        second_person = Person(pos1[1][0], pos2[1][0])
-        pic_length_in_pixel, focus_length = get_width_and_focus_length(file1.filename)
+        pic_length_in_pixel, focus_length = get_width_and_focus_length(request.files['pic1'].filename)
+        if focus_length is None:
+            flash('メタデータに焦点距離を含む写真をアップロードしてください')
+            return redirect(request.url)
 
-        distance = distance_2_ppl_person(first_person, second_person, \
-            pic_length_in_pixel, cmos_length, focus_length, camera_mov_delta)
-        return '2人の距離は {:.2f} cm'.format(distance)
+        result = crowded_people(pos_list1, pos_list2, pic_length_in_pixel, cmos_length, focus_length, camera_mov_delta)
+        return render_template("result.html", mitsu=result)
 
     return render_template("detect_mitsu.html")
 
