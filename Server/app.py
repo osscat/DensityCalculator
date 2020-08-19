@@ -37,19 +37,19 @@ def detect_mitsu():
             flash('写真を2つアップロードしてください')
             return redirect(request.url)
 
-        pos_list1 = get_pos_list('pic1')
-        pos_list2 = get_pos_list('pic2')
+        pos_list1 = get_pos_list(request.files['pic1'])
+        pos_list2 = get_pos_list(request.files['pic2'])
         if len(pos_list1) <= 1 or len(pos_list2) <= 1:
             flash('2人以上写っている写真をアップロードしてください')
             return redirect(request.url)
 
-        pic_length_in_pixel, focus_length = get_width_and_focus_length(request.files['pic1'].filename)
+        pic_length_in_pixel, focus_length = get_width_and_focus_length(request.files['pic1'])
         if focus_length is None:
             flash('メタデータに焦点距離を含む写真をアップロードしてください')
             return redirect(request.url)
 
-        result = crowded_people(pos_list1, pos_list2, pic_length_in_pixel, cmos_length, focus_length, camera_mov_delta)
-        return render_template("result.html", mitsu=result)
+        result, distance = crowded_people(pos_list1, pos_list2, pic_length_in_pixel, cmos_length, focus_length, camera_mov_delta)
+        return render_template("result.html", mitsu=result, distance='{:.2f}'.format(distance))
 
     return render_template("detect_mitsu.html")
 
@@ -73,17 +73,13 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-def get_pos_list(name):
-    file = request.files[name]
-    filename = file.filename
-    file.save(UPLOAD_FOLDER + filename)
-    image = Image.open(UPLOAD_FOLDER + filename)
+def get_pos_list(file):
+    image = Image.open(file)
     r_image, pos_list = yolo.detect_human(image)
-    r_image.save(OUTPUT_FOLDER + filename)
     return pos_list
 
-def get_width_and_focus_length(filename):
-    image: MpoImageFile = Image.open(UPLOAD_FOLDER + filename)
+def get_width_and_focus_length(file):
+    image: MpoImageFile = Image.open(file)
     width = image.size[0]
 
     exif = image.getexif()
@@ -101,6 +97,7 @@ def crowded_people(pos_list1, pos_list2, pic_length_in_pixel, cmos_length, focus
     app.logger.debug(pos_list2)
 
     count = len(pos_list1)
+    distance_list = []
     for i in range(count):
         first_person = Person(pos_list1[i][0], pos_list2[i][0])
         for j in range(i + 1, count):
@@ -108,14 +105,16 @@ def crowded_people(pos_list1, pos_list2, pic_length_in_pixel, cmos_length, focus
             distance = distance_2_ppl(first_person, second_person, \
                 pic_length_in_pixel, cmos_length, focus_length, camera_mov_delta)
 
+            distance_list.append(distance)
+
             app.logger.debug(first_person)
             app.logger.debug(second_person)
             app.logger.debug(distance)
 
             if distance < 200:
-                return True
+                return True, distance
 
-    return False
+    return False, min(distance_list)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", debug=True, port=int(os.environ.get('PORT', 5000)))
