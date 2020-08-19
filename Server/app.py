@@ -21,8 +21,8 @@ def allowed_file(filename):
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @app.route('/')
-def hello():
-    return 'Hello World!\n'
+def index():
+    return redirect('/detect_mitsu')
 
 @app.route('/post-picture', methods=['GET', 'POST'])
 def post_picture():
