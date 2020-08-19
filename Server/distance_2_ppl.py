@@ -30,3 +30,15 @@ def distance_2_ppl(first_person, second_person, pic_length_in_pixel, cmos_length
         pow(distance_from_camera_p2, 2) \
         - 2 * distance_from_camera_p1 * distance_from_camera_p2 * cos(angle_btw_people))
     return distance_btw_people
+
+if __name__ == '__main__':
+# personクラスを使った計算
+    first_person = Person(139.5, 90)
+    second_person = Person(465, 531)
+    pic_length_in_pixel = 640
+    cmos_length = 4.8
+    focus_length = 4
+    camera_mov_delta = 70
+
+    print(distance_2_ppl(first_person, second_person, \
+        pic_length_in_pixel, cmos_length, focus_length, camera_mov_delta))
