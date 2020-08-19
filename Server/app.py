@@ -5,7 +5,7 @@ from yolo_tiny import YOLO
 from PIL import Image
 from PIL.ExifTags import TAGS
 from PIL.MpoImagePlugin import MpoImageFile
-from distance_2_ppl import distance_2_ppl_person
+from distance_2_ppl import distance_2_ppl
 from person import Person
 
 UPLOAD_FOLDER = '/code/image_in/'
@@ -105,7 +105,7 @@ def crowded_people(pos_list1, pos_list2, pic_length_in_pixel, cmos_length, focus
         first_person = Person(pos_list1[i][0], pos_list2[i][0])
         for j in range(i + 1, count):
             second_person = Person(pos_list1[j][0], pos_list2[j][0])
-            distance = distance_2_ppl_person(first_person, second_person, \
+            distance = distance_2_ppl(first_person, second_person, \
                 pic_length_in_pixel, cmos_length, focus_length, camera_mov_delta)
 
             app.logger.debug(first_person)
