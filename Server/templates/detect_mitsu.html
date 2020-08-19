@@ -6,6 +6,16 @@
   <title>Document</title>
 </head>
 <body>
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      <h4>エラー</h4>
+      <ul class=flashes>
+      {% for message in messages %}
+        <li>{{ message }}</li>
+      {% endfor %}
+      </ul>
+    {% endif %}
+  {% endwith %}
   <h3>密判定サイト</h3>
   <p>位置をずらして撮影した2枚の写真から、密かどうかを判定します。</p>
   <h5>※実装途中です。現時点では写真中の左から2人の距離を計算して返します。</h5>
