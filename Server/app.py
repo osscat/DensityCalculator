@@ -14,11 +14,23 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 app = Flask(__name__)
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
+app.config['JSON_AS_ASCII'] = False
 yolo = YOLO()
 
 @app.route('/')
 def index():
     return redirect('/detect_mitsu')
+
+@app.route('/app/save_picture', methods=['POST'])
+def save_picture():
+    app.logger.debug(request)
+    if len(request.files) < 1:
+        return {'message': 'ファイルをアップロードしてください'}
+    
+    for f in request.files.values():
+        f.save(UPLOAD_FOLDER + f.filename)
+
+    return {'message': '保存しました'}
 
 @app.route('/detect_mitsu', methods=['GET', 'POST'])
 def detect_mitsu():
