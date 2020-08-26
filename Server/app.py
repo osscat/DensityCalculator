@@ -41,7 +41,7 @@ def api_detect_mitsu():
             'distance': distance
         }
     except RuntimeError as err:
-        return {'message': str(err)}
+        return {'error': str(err)}
 
 @app.route('/detect_mitsu', methods=['GET', 'POST'])
 def detect_mitsu():
