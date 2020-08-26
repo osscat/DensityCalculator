@@ -1,10 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Text, View, TouchableOpacity } from 'react-native';
 import { Camera } from 'expo-camera';
+import Toast, { DURATION } from 'react-native-easy-toast';
 
 export default function App() {
   const [hasPermission, setHasPermission] = useState(null);
-  const [type, setType] = useState(Camera.Constants.Type.back);
+  const [isSecond, setIsSecond] = useState(false);
+  const camera = useRef(null);
+  const toast = useRef(null);
+  const photos = useRef([]);
+  const url = 'http://density-calculator.herokuapp.com/api/detect_mitsu';
+  // const url = 'http://192.168.11.13:5000/api/detect_mitsu';
 
   useEffect(() => {
     (async () => {
@@ -12,6 +18,59 @@ export default function App() {
       setHasPermission(status === 'granted');
     })();
   }, []);
+
+  getFileData = (photo) => {
+    const localUri = photo.uri;
+    const filename = localUri.split('/').pop();
+    const match = /\.(\w+)$/.exec(filename);
+    const type = match ? `image/${match[1]}` : `image`;
+    return { uri: localUri, name: filename, type };
+  }
+
+  uploadFiles = async () => {
+    toast.current.show('判定中です...', DURATION.FOREVER);
+
+    const data = new FormData();
+    data.append('pic1', getFileData(photos.current[0]));
+    data.append('pic2', getFileData(photos.current[1]));
+    data.append('move', '10');
+    data.append('cmos', '4.8');
+
+    const response = await fetch(url, {
+      method: 'POST',
+      body: data,
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      }
+    });
+    const responseJson = await response.json();
+    if (responseJson.error) {
+      toast.current.show(responseJson.error, 5000);
+    } else if (responseJson.mitsu) {
+      toast.current.show('密です！', 5000);
+    } else {
+      toast.current.show('密ではありません', 5000);
+    }
+    console.log(responseJson);
+    photos.current = [];
+  }
+
+  snap = async () => {
+    if (!camera.current) {
+      return
+    }
+    const photo = await camera.current.takePictureAsync({
+      exif: true
+    });
+    photos.current.push(photo);
+
+    if (isSecond) {
+      uploadFiles();
+    }
+    setIsSecond(!isSecond);
+  };
+
+  getMessage = () => isSecond ? '右へ10cmずらしてタップしてください' : 'タップして1枚目を撮影';
 
   if (hasPermission === null) {
     return <View />;
@@ -21,7 +80,8 @@ export default function App() {
   }
   return (
     <View style={{ flex: 1 }}>
-      <Camera style={{ flex: 1 }} type={type}>
+      <Camera style={{ flex: 1 }} ref={camera}
+        autoFocus={Camera.Constants.AutoFocus.on}>
         <View
           style={{
             flex: 1,
@@ -30,21 +90,16 @@ export default function App() {
           }}>
           <TouchableOpacity
             style={{
-              flex: 0.1,
-              alignSelf: 'flex-end',
+              flex: 1,
+              alignSelf: 'center',
               alignItems: 'center',
             }}
-            onPress={() => {
-              setType(
-                type === Camera.Constants.Type.back
-                  ? Camera.Constants.Type.front
-                  : Camera.Constants.Type.back
-              );
-            }}>
-            <Text style={{ fontSize: 18, marginBottom: 10, color: 'white' }}> Flip </Text>
+            onPress={snap}>
+            <Text style={{ fontSize: 20, marginBottom: 10, color: 'white' }}>{getMessage()}</Text>
           </TouchableOpacity>
         </View>
       </Camera>
+      <Toast ref={toast}/>
     </View>
   );
 }
