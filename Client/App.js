@@ -10,6 +10,7 @@ export default function App() {
   const toast = useRef(null);
   const photos = useRef([]);
   const url = 'http://density-calculator.herokuapp.com/api/detect_mitsu';
+  // const url = 'http://192.168.11.13:5000/api/save_picture';
   // const url = 'http://192.168.11.13:5000/api/detect_mitsu';
 
   useEffect(() => {
@@ -60,6 +61,7 @@ export default function App() {
       return
     }
     const photo = await camera.current.takePictureAsync({
+      quality: 0.1,
       exif: true
     });
     photos.current.push(photo);
@@ -99,7 +101,10 @@ export default function App() {
           </TouchableOpacity>
         </View>
       </Camera>
-      <Toast ref={toast}/>
+      <Toast ref={toast}
+        position='top'
+        textStyle={{ fontSize:20, color:'white' }}
+      />
     </View>
   );
 }
