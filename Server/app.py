@@ -21,7 +21,7 @@ yolo = YOLO()
 def index():
     return redirect('/detect_mitsu')
 
-@app.route('/app/save_picture', methods=['POST'])
+@app.route('/api/save_picture', methods=['POST'])
 def save_picture():
     app.logger.debug(request)
     if len(request.files) < 1:
@@ -101,6 +101,7 @@ def allowed_file(filename):
 def get_pos_list(file):
     image = Image.open(file)
     r_image, pos_list = yolo.detect_human(image)
+    # r_image.save(OUTPUT_FOLDER + file.filename)
     return pos_list
 
 def get_width_and_focus_length(file):
