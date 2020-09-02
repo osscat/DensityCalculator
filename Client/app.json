@@ -1,9 +1,9 @@
 {
   "expo": {
-    "name": "HelloWorld",
-    "slug": "Client",
+    "name": "DensityCalculator",
+    "slug": "density-calculator",
     "version": "1.0.0",
-    "orientation": "portrait",
+    "orientation": "landscape",
     "icon": "./assets/icon.png",
     "splash": {
       "image": "./assets/splash.png",
@@ -21,6 +21,13 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "sdkVersion": "38.0.0",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "description": ""
   }
 }
